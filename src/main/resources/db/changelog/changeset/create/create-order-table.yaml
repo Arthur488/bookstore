@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: createTable-orders
+      author: Arthur
+      changes:
+        - createTable:
+            tableName: orders
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+              - column:
+                  name: updated_date
+                  type: TIMESTAMP
+              - column:
+                  name: total_price
+                  type: DECIMAL(10,2)

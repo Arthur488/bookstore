@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: createTable-books
+      author: Arthur
+      changes:
+        - createTable:
+            tableName: books
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: sku
+                  type: VARCHAR(255)
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+              - column:
+                  name: updated_date
+                  type: TIMESTAMP
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+              - column:
+                  name: price
+                  type: DECIMAL(10, 2)
+              - column:
+                  name: author_id
+                  type: BIGINT
+              - column:
+                  name: category_id
+                  type: BIGINT
