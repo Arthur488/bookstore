@@ -18,113 +18,157 @@ stack:
   preset: api-backend
 
 process:
-  id: decomposition
-  name: Bookstore Documentation Decomposition
-  primary: false
+  id: bookstore_docs_pipeline
+  name: Bookstore Documentation Pipeline
+  primary: true
   gates: after_pr
 
   states:
-    - id: lead_scope
-      name: Lead scope analysis
+    - id: decomposition
+      name: Decomposition
+      specialist:
+        id: decomposition
+        name: Decomposition
+      instructions: >
+        Split a large Bookstore documentation goal into child Linear issues.
+        Each child issue must be independently executable and should enter the
+        standard Ship execution pipeline at stage:planning.
+
+    - id: planning_done
+      name: Decomposition done
+      specialist:
+        id: decomposition
+        name: Decomposition
+      instructions: >
+        Terminal state for the parent decomposition task.
+
+    - id: planning
+      name: Documentation planning
       specialist:
         id: planning
         name: Planning
       instructions: >
-        Act as a technical lead using the standard Ship planning role.
-        Analyze the Bookstore repository, define documentation scope,
-        identify main modules, architecture boundaries, risks, and what
-        the next agents must inspect.
+        Analyze one selected Bookstore documentation child issue.
+        Clarify the exact documentation scope, acceptance criteria, source files
+        that must be inspected, and handoff notes for implementation.
 
-    - id: ba_requirements
-      name: Business analysis
-      specialist:
-        id: planning
-        name: Planning
-      instructions: >
-        Act as a business analyst using the standard Ship planning role.
-        Convert the lead scope into business-facing documentation requirements:
-        domain entities, user scenarios, API use cases, expected readers,
-        and missing documentation sections.
-
-    - id: dev_technical_analysis
-      name: Developer technical analysis
+    - id: dev_implementation
+      name: Documentation implementation
       specialist:
         id: developer
         name: Developer
       instructions: >
-        Act as a Java Spring Boot developer.
-        Inspect the Maven project, Java 17 setup, Spring Boot configuration,
-        controllers, services, repositories, entities, Liquibase migrations,
-        PostgreSQL usage, OpenAPI/Swagger setup, tests, and runtime assumptions.
-        Produce verified technical notes for the writer stage.
+        Implement the selected documentation task in the repository.
+        Make real changes to README.md and/or docs/*.md, keep the content accurate
+        to the Java Spring Boot codebase, and prepare a GitHub PR.
 
-    - id: technical_writing
-      name: Technical writing
+    - id: validation
+      name: Documentation validation
       specialist:
-        id: planning
-        name: Planning
+        id: validation
+        name: Validation
       instructions: >
-        Act as a technical writer using the standard Ship planning role.
-        Use outputs from lead, BA, and developer stages to prepare polished
-        public repository documentation. Prefer README.md and docs/*.md.
-        Cover overview, features, architecture, stack, setup, configuration,
-        database migrations, API documentation, testing, troubleshooting,
-        and known limitations.
+        Validate the documentation changes against the repository.
+        Check setup instructions, API paths, database/Liquibase details, Maven/Java
+        version, tests, and known limitations. Return concrete fixes if needed.
 
-    - id: documentation_review
+    - id: code_review
       name: Documentation review
       specialist:
         id: reviewer
         name: Reviewer
       instructions: >
-        Act as a final technical reviewer.
-        Review produced documentation for correctness, completeness,
-        consistency with the Bookstore codebase, and usefulness for developers.
-        If acceptable, finalize the task; otherwise leave concrete corrections.
+        Review the documentation PR for correctness, completeness, consistency,
+        and developer usefulness. Approve only when it is ready.
 
-    - id: planning_done
-      name: Decomposition done
+    - id: auto_merge
+      name: Ready to merge
       specialist:
         id: reviewer
         name: Reviewer
       instructions: >
-        Terminal state. No further agent work should be executed here.
+        Terminal stage for approved documentation work. No agent should perform
+        additional implementation here unless explicitly configured.
 
   transitions:
-    - from: lead_scope
-      to: ba_requirements
-    - from: ba_requirements
-      to: dev_technical_analysis
-    - from: dev_technical_analysis
-      to: technical_writing
-    - from: technical_writing
-      to: documentation_review
-    - from: documentation_review
+    - from: decomposition
       to: planning_done
 
+    - from: planning
+      to: dev_implementation
+    - from: dev_implementation
+      to: validation
+    - from: validation
+      to: code_review
+    - from: code_review
+      to: auto_merge
+
   routines:
-    lead_scope:
-      name: Lead scope analysis
+    decomposition:
+      name: Decompose Bookstore documentation work
       enabled: true
-      specialist: planning
-      fsm_stage: lead_scope
-      pipeline_priority: 50
+      specialist: decomposition
+      fsm_stage: decomposition
+      pipeline_priority: 100
       trigger:
         type: schedule
         cron: "*/30 * * * *"
         window: "30m"
         catchup: latest
       prompt: >
-        You are the first agent in the Bookstore documentation decomposition chain.
-        Act as a technical lead. Read the repository and existing README.
-        Produce a scope note: project purpose, main modules, architecture boundaries,
-        documentation risks, and exact handoff instructions for the BA stage.
+        You are running the Bookstore documentation decomposition stage.
+        Analyze the repository Arthur488/bookstore and split the parent goal into
+        practical child Linear issues. The target documentation set must cover:
+        domain and business capabilities, architecture and code structure,
+        database/PostgreSQL/Liquibase, REST API and Swagger/OpenAPI, local setup,
+        build and configuration, testing, known limitations, README overhaul,
+        and final documentation review. Child issues should be created so they can
+        be executed by the standard pipeline starting from stage:planning.
 
-    ba_requirements:
-      name: Business analysis
+    planning:
+      name: Plan one documentation child issue
       enabled: true
       specialist: planning
-      fsm_stage: ba_requirements
+      fsm_stage: planning
+      pipeline_priority: 80
+      trigger:
+        type: schedule
+        cron: "*/30 * * * *"
+        window: "30m"
+        catchup: latest
+      prompt: >
+        Pick one Bookstore documentation issue at stage:planning.
+        Act as a lead/BA planner. Read the issue, repository, existing README,
+        Maven config, source tree, and relevant code. Produce a precise plan:
+        what documentation must be changed, which files to inspect, expected output,
+        acceptance criteria, risks, and handoff notes. Move the issue to
+        dev_implementation when the plan is ready.
+
+    dev_implementation:
+      name: Implement one documentation child issue
+      enabled: true
+      specialist: developer
+      fsm_stage: dev_implementation
+      pipeline_priority: 60
+      trigger:
+        type: schedule
+        cron: "*/30 * * * *"
+        window: "30m"
+        catchup: latest
+      prompt: >
+        Pick one Bookstore documentation issue at stage:dev_implementation.
+        Implement the requested documentation changes directly in the repository.
+        Prefer README.md and docs/*.md. Keep the docs accurate to the actual
+        Spring Boot 3.1.0 / Java 17 / Maven / PostgreSQL / Liquibase codebase.
+        Verify actual endpoints, context path, configuration, tests, and known
+        mismatches before writing. Commit the changes on a branch and open a PR.
+        If a PR already exists for the issue, update that PR.
+
+    validation:
+      name: Validate one documentation PR
+      enabled: true
+      specialist: validation
+      fsm_stage: validation
       pipeline_priority: 40
       trigger:
         type: schedule
@@ -132,34 +176,18 @@ process:
         window: "30m"
         catchup: latest
       prompt: >
-        You are the BA stage in the Bookstore documentation decomposition chain.
-        Use the lead scope output. Describe business capabilities: books, authors,
-        categories, orders, reports, API consumers, domain terminology,
-        and documentation requirements. Hand off clear requirements to the developer stage.
+        Pick one Bookstore documentation issue at stage:validation.
+        Validate the documentation PR against the repository. Check that setup,
+        Maven commands, Java version, Spring Boot details, REST API paths,
+        Swagger/OpenAPI path, PostgreSQL/Liquibase behavior, tests, and limitations
+        are correct. If something is wrong, leave precise corrections and mark the
+        issue as needing fixes. If valid, move it to code_review.
 
-    dev_technical_analysis:
-      name: Developer technical analysis
+    code_review:
+      name: Review one documentation PR
       enabled: true
-      specialist: developer
-      fsm_stage: dev_technical_analysis
-      pipeline_priority: 30
-      trigger:
-        type: schedule
-        cron: "*/30 * * * *"
-        window: "30m"
-        catchup: latest
-      prompt: >
-        You are the developer analysis stage. Use previous outputs and inspect the code.
-        Document real implementation details: Spring Boot, Java 17, Maven, JPA/Hibernate,
-        PostgreSQL, Liquibase, OpenAPI/Swagger, package structure, tests, application
-        startup, config files, and inconsistencies between README and code.
-        Hand off verified technical notes to the writing stage.
-
-    technical_writing:
-      name: Technical writing
-      enabled: true
-      specialist: planning
-      fsm_stage: technical_writing
+      specialist: reviewer
+      fsm_stage: code_review
       pipeline_priority: 20
       trigger:
         type: schedule
@@ -167,29 +195,11 @@ process:
         window: "30m"
         catchup: latest
       prompt: >
-        You are the technical writing stage. Use all previous outputs.
-        Produce clean public GitHub documentation for Bookstore.
-        Prefer README.md and docs/*.md changes. Structure documentation with:
-        overview, features, architecture, technology stack, local setup,
-        environment configuration, database and Liquibase migrations,
-        API documentation, testing, troubleshooting, and known limitations.
-
-    documentation_review:
-      name: Documentation review
-      enabled: true
-      specialist: reviewer
-      fsm_stage: documentation_review
-      pipeline_priority: 10
-      trigger:
-        type: schedule
-        cron: "*/30 * * * *"
-        window: "30m"
-        catchup: latest
-      prompt: >
-        You are the final review stage. Review the documentation output.
-        Check technical accuracy against the repository, consistency, missing setup steps,
-        API/database correctness, and developer usefulness. Approve only if the docs are
-        ready for a public repository; otherwise provide exact fixes.
+        Pick one Bookstore documentation issue at stage:code_review.
+        Review the associated PR. Check structure, readability, accuracy, and whether
+        the documentation is useful for a new developer. Approve when ready or request
+        concrete changes. If approved, move the issue to auto_merge / done according
+        to the workspace policy.
 
 lanes: {}
 
