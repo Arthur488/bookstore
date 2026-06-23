@@ -62,13 +62,13 @@ never references books directly — it always goes through its line items.
 
 Produces a **read-only sales summary**: for a requested date range, the total
 paid amount **per day**. It is a query over existing orders — orders are grouped
-by their creation date and each day's order totals are summed — and returns a
-map of *date → paid amount*. 
+by their creation date — and returns a map of *date → paid amount*.
 
 There is **no `Report` entity** and nothing is stored: the report is computed on
-each request from the orders already on record. (Its exact numeric type and the
-date-boundary semantics are behavioural quirks documented under Known
-limitations, **EXP-8**, and the API contract, **EXP-5**.)
+each request from the orders already on record. (The exact same-day aggregation
+semantics, the numeric type and the date-boundary handling are behavioural
+quirks documented under Known limitations, **EXP-8**, and the API contract,
+**EXP-5**.)
 
 ## Domain model
 
