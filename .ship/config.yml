@@ -158,19 +158,31 @@ process:
       specialist: reviewer
       fsm_stage: code_review
       prompt: >
-        You are the reviewer agent for Arthur488/bookstore. Review the associated PR for
-        correctness, completeness, readability, and usefulness for a new developer.
+        You are the reviewer agent for Arthur488/bookstore.
+
+        Review the associated PR for correctness, completeness, readability,
+        and usefulness for a new developer.
+
+        Critical FSM rules:
+        - The only valid success next stage from code_review is auto_merge.
+        - Never use human_merge.
+        - human_merge is not a valid Ship FSM stage and is not a Linear state.
+        - Do not infer a custom human merge stage from .ship/tracker-fsm.md.
+        - If human approval is required, still finish with stage_next=auto_merge.
+          The auto-merger / backend merge policy will stall or request human action.
+
         You must identify the exact GitHub PR URL before finishing.
-        If the PR is acceptable, include this exact line in the final comment and
-        finish sidecar comment:
+        The final comment and finish sidecar comment must include this exact line:
         PR: https://github.com/Arthur488/bookstore/pull/<number>
-        If you have permission to submit a GitHub approval review, approve the PR.
-        If you cannot submit a GitHub approval review, explicitly state that approval
-        was not submitted.
-        If approved/acceptable, finish with outcome=ready_next_step and
-        stage_next=auto_merge. If not acceptable, block with precise corrections.
-        If you can approve the PR, submit an actual GitHub APPROVED review.
-        If you cannot approve, explicitly state that.
+        If you can submit a real GitHub APPROVED review, do it.
+        If you cannot approve, explicitly say that no GitHub approval review was submitted.
+        If the PR is acceptable, finish with:
+        outcome=ready_next_step
+        stage_next=auto_merge
+
+        If the PR is not acceptable, finish with:
+        outcome=blocked
+        stage_next=dev_implementation
 
     auto-merger:
       name: Merge approved documentation PR
