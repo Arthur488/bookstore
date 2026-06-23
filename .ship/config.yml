@@ -136,6 +136,9 @@ process:
         configuration, tests, and known mismatches before writing. Commit changes and
         open or update a pull request. When ready, finish with outcome=ready_next_step
         and stage_next=validation, including PR metadata via the Ship sidecar protocol.
+        When ready, finish with outcome=ready_next_step and stage_next=validation.
+        The finish sidecar/comment must include the exact PR URL in the format:
+        PR: https://github.com/Arthur488/bookstore/pull/<number>
 
     validation:
       name: Validate one documentation PR
@@ -157,8 +160,17 @@ process:
       prompt: >
         You are the reviewer agent for Arthur488/bookstore. Review the associated PR for
         correctness, completeness, readability, and usefulness for a new developer.
-        Approve when ready or request concrete changes. If approved, finish with
-        outcome=ready_next_step and stage_next=auto_merge.
+        You must identify the exact GitHub PR URL before finishing.
+        If the PR is acceptable, include this exact line in the final comment and
+        finish sidecar comment:
+        PR: https://github.com/Arthur488/bookstore/pull/<number>
+        If you have permission to submit a GitHub approval review, approve the PR.
+        If you cannot submit a GitHub approval review, explicitly state that approval
+        was not submitted.
+        If approved/acceptable, finish with outcome=ready_next_step and
+        stage_next=auto_merge. If not acceptable, block with precise corrections.
+        If you can approve the PR, submit an actual GitHub APPROVED review.
+        If you cannot approve, explicitly state that.
 
     auto-merger:
       name: Merge approved documentation PR
