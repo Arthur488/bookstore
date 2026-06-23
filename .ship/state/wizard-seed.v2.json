@@ -1,0 +1,25 @@
+{
+  "bundle": [
+    "daily-retro",
+    "learning-capture",
+    "workflow-self-heal",
+    "tech-reviewer",
+    "qa-reviewer",
+    "security-officer",
+    "process-reviewer",
+    "intake",
+    "ba",
+    "tech-architect",
+    "qa-architect",
+    "developer",
+    "devops",
+    "qa-engineer",
+    "qa-automation",
+    "reviewer"
+  ],
+  "bundle_version": "ac1f6d16d4ce",
+  "knowledge": [],
+  "seeded_at": "2026-06-23T18:15:39Z",
+  "ship_version": "unknown",
+  "tracker_kind": "linear"
+}
