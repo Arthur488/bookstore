@@ -89,6 +89,25 @@ These are the native statuses Ship will target for each FSM state. Rename them o
 | `done` | Done |
 | `cancelled` | Canceled |
 
+## Ship runtime stage contract
+
+This repository also uses Ship's bundled runtime stages:
+
+planning → dev_implementation → validation → code_review → auto_merge.
+
+These runtime stages are represented in Linear by stage:<name> labels and are not the same thing as the human-facing ticket lifecycle states above.
+
+Important rules for agents:
+
+- A successful code_review finish MUST use stage_next=auto_merge.
+- Never use stage_next=human_merge; human_merge is not a valid Ship runtime stage and is not a Linear workflow state.
+- auto_merge does not mean "merge without policy". It means "enter the merge gate".
+- If human approval is required, the auto-merger/backend merge policy must stall or request human action from the auto_merge stage.
+- A reviewer that does not submit a GitHub approval review must still finish successful review with stage_next=auto_merge, not human_merge.
+- The final reviewer comment must include the exact PR URL in this format:
+
+PR: https://github.com/Arthur488/bookstore/pull/<number>
+
 ## Operator cheat sheet
 
 - Need Ship to pick up a ticket right now? Move it to `ready` and run the planning lane (`shipctl run --lane planning`).
